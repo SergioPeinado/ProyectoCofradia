@@ -1,11 +1,13 @@
-package vista;
+ package vista;
 
 import java.awt.BorderLayout;
+import java.awt.Component;
 import java.awt.EventQueue;
 import java.awt.JobAttributes;
 import java.awt.ScrollPane;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.sql.Connection;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -23,7 +25,9 @@ import javax.swing.table.DefaultTableModel;
 
 import com.jgoodies.forms.factories.DefaultComponentFactory;
 
-import controlador.ControladorCSVBD;
+import controlador.ActualizadorBD;
+import controlador.ControladorBD;
+import controlador.ControladorCSV;
 import modelo.Cofradia;
 
 import javax.swing.JScrollPane;
@@ -39,20 +43,22 @@ import javax.swing.JOptionPane;
 
 public class Prueba extends JFrame {
 	//lista donde se van a guardar los objetos cofradia
-	List<Cofradia> lista = new ArrayList<>();
+	private List<Cofradia> lista = new ArrayList<>();
 	//Con esta variable podemos hacer que el formulario se actualice
 	//al cambiar de registro
-	boolean actualizar = true;
+	private boolean actualizar = true;
 	//variable que nos va a controlar si estamos borrando o registros de las filas
-	boolean borrar = false;
+	private boolean borrar = false;
 	//variable que va a hacer que no salte el option pane
 	//preguntando si queremos guardar.
-	int vez =0;
+	private int vez =0;
 	//el registro del cual venimos
-	int numero_registro;
+	private int numero_registro;
 	//registro al cual vamos
 	//de ahi la "d" de registro destino
-	int d;
+	private int d;
+	//private JMenu mnNewMenu;
+	private JMenuItem cargar;
 	private JPanel contentPane;
 	private JTable table;
 	private JScrollPane  scrollPane;
@@ -65,20 +71,28 @@ public class Prueba extends JFrame {
 	private JTextField nombre;
 	private JTextField nCofrades;
 	private JTextField entrada;
+	JFileChooser cargarArchivo = new JFileChooser();
+	private static Connection conexion = ControladorBD.getConexionCofrade();
 	JLabel lblRegistro = new JLabel("Registro:");
 	
 	public Prueba(){
 		componentes();
+		//ControladorBD.getConexionCofrade();
+		//lista = ControladorCSVBD.devolverListaCofradia(ControladorCSVBD.getConexionCofrade());
+		
 		table.getSelectionModel().addListSelectionListener((ListSelectionEvent e) ->{
 			//Aqui comprobamos que no se estan borrando los archivos ni nada
 			//y que ademas no se contenga ningun campo vacio
+			
 			if(!borrar && !nombre.getText().matches("") && !fundacion.getText().matches("") && !nCofrades.getText().matches("") &&
 					!titulares.getText().matches("") && !salida.getText().matches("") && !entrada.getText().matches("")){
 			//si se da la condicion de arriba
 		    //se nos crea un nuevo objeto cofradia que obtiene todos los datos
 				//del csv
+				
 				Cofradia c = new Cofradia(nombre.getText(), Integer.parseInt(fundacion.getText()), Integer.parseInt(nCofrades.getText()), Integer.parseInt(titulares.getText()),
 						salida.getText(), entrada.getText());
+				
 			//aqui se comprueba que el objeto nuevo que se crea
 				//no sea igual a uno ya creado
 				
@@ -89,14 +103,16 @@ public class Prueba extends JFrame {
 				}
 				//se llama al dialogo
 				//que no debe aparecer si esta bien creado el objeto
-				int valor = JOptionPane.showConfirmDialog(rootPane, "¿Desea guardar el registro?","Guardar",JOptionPane.YES_NO_OPTION);
+				int valor = JOptionPane.showConfirmDialog(rootPane, "Â¿Desea guardar el registro?","Guardar",JOptionPane.YES_NO_OPTION);
 				if(valor == JOptionPane.YES_OPTION);{
 					//Aqui se actualiza los datos, en caso de ser modificados
 					//y se decide guardar.
 					actualizar = false;
+					ControladorBD.actualizarCofradias(ControladorBD.getConexionCofrade(),lista.get(numero_registro) , numero_registro+1);
 					lista.get(numero_registro).setCofradia(new Cofradia(nombre.getText(), Integer.parseInt(fundacion.getText()), Integer.parseInt(nCofrades.getText()), Integer.parseInt(titulares.getText()),
 						salida.getText(), entrada.getText()));
-					table.setModel(ControladorCSVBD.insertarRegistros(cabecera, lista));
+					
+					table.setModel(ControladorCSV.insertarRegistros(cabecera, lista));
 					actualizar = true;
 					table.setRowSelectionInterval(d, d);
 				}
@@ -111,7 +127,7 @@ public class Prueba extends JFrame {
 				lblRegistro.setText("Registro: "+(table.getSelectedRow()+1)+" de "+table.getRowCount());
 			}
 			if (actualizar){
-				//aqui añadimos a los formularios los registros que se obtienen de la tabla
+				//aqui anadimos a los formularios los registros que se obtienen de la tabla
 				//permitiendoq que si se cambia de fila
 				//los datos se actualicen
 				nombre.setText(lista.get(table.getSelectedRow()).getNombre());
@@ -150,13 +166,18 @@ public class Prueba extends JFrame {
 		
 		JMenuBar menuBar = new JMenuBar();
 		setJMenuBar(menuBar);
-		JFileChooser cargarArchivo = new JFileChooser();
+		
 		
 		JMenu mnNewMenu = new JMenu("Archivo");
 		menuBar.add(mnNewMenu);
 		
 		JMenuItem cargar = new JMenuItem("Cargar");
 		mnNewMenu.add(cargar);
+		cargar.addActionListener(new java.awt.event.ActionListener(){
+			public void actionPerformed(java.awt.event.ActionEvent evt){
+				cargarActionPerformed(evt);
+			}
+		});
 		
 		JMenu mnCrear = new JMenu("Crear");
 		menuBar.add(mnCrear);
@@ -179,19 +200,7 @@ public class Prueba extends JFrame {
 				mntmInfoActionPerformed(evt);
 			}
 		});
-		cargar.addActionListener(new ActionListener() {
-			//Aqui se ejecuta el JFileChooser para poder obtener los archivos
-			@Override
-			public void actionPerformed(ActionEvent arg0) {
-				int elegir = cargarArchivo.showOpenDialog(contentPane);
-				if (elegir == JFileChooser.APPROVE_OPTION){
-					lista = ControladorCSVBD.devolverString(cargarArchivo.getSelectedFile());
-					table.setModel(ControladorCSVBD.insertarRegistros(cabecera, lista));
-					
-				}
-				
-			}
-		});
+		
 		contentPane = new JPanel();
 		contentPane.setBorder(new EmptyBorder(5, 5, 5, 5));
 		contentPane.setLayout(new BorderLayout(0, 0));
@@ -208,7 +217,7 @@ public class Prueba extends JFrame {
 		panel1.setLeftComponent(scrollPane);
 		//scrollPane.setVerticalScrollBar(new JScrollBar(JScrollBar.VERTICAL));
 		
-		cabecera = new String[] {"Nombre","Ano Fundacion","Nº hermanos", "Titulares","Hora salida","Hora entrada"};
+		cabecera = new String[] {"Nombre","Ano Fundacion","Cofrades", "Titulares","Hora salida","Hora entrada"};
 		dtm = new DefaultTableModel();
 		dtm.setColumnIdentifiers(cabecera);
 		
@@ -236,7 +245,7 @@ public class Prueba extends JFrame {
 		
 		nCofrades = new JTextField();
 		nCofrades.setColumns(10);
-		//Añadimos todos los actionperformed
+		//Aï¿½adimos todos los actionperformed
 		JLabel lblNombre = DefaultComponentFactory.getInstance().createLabel("Nombre: ");
 		 nombre.addActionListener(new java.awt.event.ActionListener(){
 			public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -279,7 +288,7 @@ public class Prueba extends JFrame {
 		JButton btnNuevo = new JButton("Nuevo");
 		btnNuevo.addActionListener (new java.awt.event.ActionListener(){
 			public void actionPerformed(java.awt.event.ActionEvent evt) {
-				botonAñadirActionPerformed(evt);				
+				botonAnadirActionPerformed(evt);				
 			}			 
 		 });
 		JButton btnSiguiente = new JButton("Siguiente");
@@ -300,6 +309,15 @@ public class Prueba extends JFrame {
 				botonAtrasActionPerformed(evt);				
 			}			 
 		 });
+		if (ControladorBD.verNumeroRegistros(ControladorBD.getConexionCofrade())>0){
+			
+			cargar.setEnabled(false);
+            actualizar=false;
+            lista = ControladorBD.devolverCofradias(ControladorBD.getConexionCofrade());
+            table.setModel(ControladorCSV.insertarRegistros(cabecera, lista));
+            actualizar=true;
+           
+        }
 		
 		//JLabel lblRegistro = new JLabel("Registro:");
 		
@@ -392,9 +410,19 @@ public class Prueba extends JFrame {
 		panel.setLayout(gl_panel);
 						
 	}
+	private void cargarActionPerformed(java.awt.event.ActionEvent evt){
+		int elegir = cargarArchivo.showOpenDialog(contentPane);
+		if (elegir == JFileChooser.APPROVE_OPTION){
+			actualizar = false;
+			lista = ControladorCSV.devolverString(cargarArchivo.getSelectedFile());
+			table.setModel(ControladorCSV.insertarRegistros(cabecera, lista));
+			actualizar=true;
+		}
+		
+	}
 	//Este metodo nos creara el pdf
 	private void mntmPdfActionPerformed(java.awt.event.ActionEvent evt){
-		ControladorCSVBD.creacionDePDF(lista);
+		ControladorCSV.creacionDePDF(lista);
 	}
 	//Aqui llamamos al JOptionPane para obtener la informacion
 	//del acerda de...
@@ -404,54 +432,60 @@ public class Prueba extends JFrame {
 	//Agrega el campo nombre a su respectiva celda
 	private void celdaNombreActionPerformed(java.awt.event.ActionEvent evt){
 		 lista.get(table.getSelectedRow()).setNombre(nombre.getText());
+		 ControladorBD.actualizarCofradias(ControladorBD.getConexionCofrade(),lista.get(numero_registro) , numero_registro+1);
 		 int fila = table.getSelectedRow();
 		 actualizar = false;
-		 table.setModel(ControladorCSVBD.insertarRegistros(cabecera, lista));
+		 table.setModel(ControladorCSV.insertarRegistros(cabecera, lista));
 		 actualizar = true;
 		 table.setRowSelectionInterval(fila, fila);
 	 }
 	//Agrega el campo fundacion a su respectiva celda
 	 private void celdaFuncadionActionPerformed(java.awt.event.ActionEvent evt){
 		 lista.get(table.getSelectedRow()).setFundacion(Integer.parseInt(fundacion.getText()));
+		 ControladorBD.actualizarCofradias(ControladorBD.getConexionCofrade(),lista.get(numero_registro) , numero_registro+1);
 		 int fila = table.getSelectedRow();
 		 actualizar = false;
-		 table.setModel(ControladorCSVBD.insertarRegistros(cabecera, lista));
+		 table.setModel(ControladorCSV.insertarRegistros(cabecera, lista));
 		 actualizar = true;
 		 table.setRowSelectionInterval(fila, fila);
 	 }
 	//Agrega el campo hermanos a su respectiva celda
 	 private void celdaHermanosActionPerformed(java.awt.event.ActionEvent evt){
 		 lista.get(table.getSelectedRow()).setN_hermanos(Integer.parseInt(nCofrades.getText()));
+		 ControladorBD.actualizarCofradias(ControladorBD.getConexionCofrade(),lista.get(numero_registro) , numero_registro+1);
 		 int fila = table.getSelectedRow();
 		 actualizar = false;
-		 table.setModel(ControladorCSVBD.insertarRegistros(cabecera, lista));
+		 table.setModel(ControladorCSV.insertarRegistros(cabecera, lista));
 		 actualizar = true;
 		 table.setRowSelectionInterval(fila, fila);
 	 }
 	//Agrega el campo titulares a su respectiva celda
 	 private void celdaTitularesActionPerformed(java.awt.event.ActionEvent evt){
 		 lista.get(table.getSelectedRow()).setTitulares(Integer.parseInt(titulares.getText()));
+		 ControladorBD.actualizarCofradias(ControladorBD.getConexionCofrade(),lista.get(numero_registro) , numero_registro+1);
 		 int fila = table.getSelectedRow();
 		 actualizar = false;
-		 table.setModel(ControladorCSVBD.insertarRegistros(cabecera, lista));
+		 table.setModel(ControladorCSV.insertarRegistros(cabecera, lista));
 		 actualizar = true;
 		 table.setRowSelectionInterval(fila, fila);
 	 }
 	//Agrega el campo salida a su respectiva celda
 	 private void celdaSalidaActionPerformed(java.awt.event.ActionEvent evt){
 		 lista.get(table.getSelectedRow()).setH_salida(salida.getText());
+		 ControladorBD.actualizarCofradias(ControladorBD.getConexionCofrade(),lista.get(numero_registro) , numero_registro+1);
 		 int fila= table.getSelectedRow();
 		 actualizar = false;
-		 table.setModel(ControladorCSVBD.insertarRegistros(cabecera, lista));
+		 table.setModel(ControladorCSV.insertarRegistros(cabecera, lista));
 		 actualizar = true;
 		 table.setRowSelectionInterval(fila, fila);
 	 }
 	//Agrega el campo Entrada a su respectiva celda
 	 private void celdaEntradaActionPerformed(java.awt.event.ActionEvent evt){
 		 lista.get(table.getSelectedRow()).setH_entrada(entrada.getText());
+		 ControladorBD.actualizarCofradias(ControladorBD.getConexionCofrade(),lista.get(numero_registro) , numero_registro+1);
 		 int fila= table.getSelectedRow();
 		 actualizar = false;
-		 table.setModel(ControladorCSVBD.insertarRegistros(cabecera, lista));
+		 table.setModel(ControladorCSV.insertarRegistros(cabecera, lista));
 		 actualizar = true;
 		 table.setRowSelectionInterval(fila, fila);
 	 }
@@ -464,7 +498,7 @@ public class Prueba extends JFrame {
 	                    
 	        }
 	 }
-	 //con este metodo nos permitirá ir hacia atras en la tabla
+	 //con este metodo nos permitirï¿½ ir hacia atras en la tabla
 	 private void botonAtrasActionPerformed(java.awt.event.ActionEvent evt){
 		 if (table.getSelectedRow()!=0 && table.getSelectedRow()!=-1)
 	            table.setRowSelectionInterval(table.getSelectedRow()-1, table.getSelectedRow()-1);
@@ -473,11 +507,11 @@ public class Prueba extends JFrame {
 	           
 	        }	  
 	 }
-	 //Aqui añadimos un nuevo registro
+	 //Aqui aï¿½adimos un nuevo registro
 	 //no tiene perdida
-	 private void botonAñadirActionPerformed(java.awt.event.ActionEvent evt){
+	 private void botonAnadirActionPerformed(java.awt.event.ActionEvent evt){
 		 actualizar =false;
-		 table.setModel(ControladorCSVBD.agregarRegistro(cabecera,lista));	 
+		 table.setModel(ControladorCSV.agregarRegistro(cabecera,lista));	 
 		 actualizar = true;
 		 table.setRowSelectionInterval(table.getRowCount()-1,table.getRowCount()-1);
 	 }
@@ -486,7 +520,7 @@ public class Prueba extends JFrame {
 	 private void botonEliminarActionPerformed(java.awt.event.ActionEvent evt){
 		 borrar = true;
 		 actualizar =false;
-		 table.setModel(ControladorCSVBD.borrarRegistro(cabecera, lista, table.getSelectedRow()));
+		 table.setModel(ControladorCSV.borrarRegistro(cabecera, lista, table.getSelectedRow()));
 		 actualizar = true;
 		 if(table.getRowCount() !=0){
 			 if(numero_registro == table.getRowCount())

@@ -26,7 +26,7 @@ import  com.opencsv.CSVReader;
 import modelo.Cofradia;
 import vista.Prueba;
 
-public class ControladorCSVBD {
+public class ControladorCSV {
 	/*metodo que lee con CSVReader
 	 * las lineas de un fichero CSV 
 	 * y devuelve una lista
@@ -36,7 +36,7 @@ public class ControladorCSVBD {
 	 * */
 	private static ModificarTabla dtm = new ModificarTabla();
 	
-	private static final String[] cabecera={"Nombre","Ano Fundacion","N� hermanos", "Titulares","Hora salida","Hora entrada"};
+	private static final String[] cabecera={"Nombre","Ano Fundacion","Cofrades", "Titulares","Hora salida","Hora entrada"};
 	
 	public static List<Cofradia> devolverString(File inFile){
 		String[] linea = new String[5];
@@ -48,7 +48,7 @@ public class ControladorCSVBD {
 			CSVReader prueba = new CSVReader(new FileReader(inFile));
 			linea = prueba.readNext();
 			while(linea != null){
-				//a�adimos a la lista los campos del CSV.
+				//anadimos a la lista los campos del CSV.
 				lista.add(new Cofradia(linea[0], Integer.parseInt(linea[1]), Integer.parseInt(linea[2]), Integer.parseInt(linea[3]), linea[4], linea[5]));
 				linea = prueba.readNext();
 			}
@@ -100,12 +100,10 @@ public class ControladorCSVBD {
 	//metodo que va a borrar un registro
 	public static DefaultTableModel borrarRegistro(String[] cabecera, List<Cofradia> lista, int fila){
 		//borramos una fila de la lista
-		ControladorBD.borrarCofradia(ControladorBD.getConexionCofrade(), fila-1);
+		ControladorBD.borrarCofradia(ControladorBD.getConexionCofrade(), fila+1);
 		lista.remove(fila);
 		return insertarRegistros(cabecera, lista);
 	}
-	
-	
 	//ultimo metodo de la clase
 	//que nos va a generar un PDF 
 	//de lo que se encuentra en la tabla 
@@ -118,14 +116,14 @@ public class ControladorCSVBD {
 			//que se crea
 			PdfWriter.getInstance(archivoPDF, new FileOutputStream(new File("Cofradias.pdf")));
 			archivoPDF.open();
-			//a�ado las columnas que va a tener el fichero
+			//anado las columnas que va a tener el fichero
 			PdfPTable filaCofradia = new PdfPTable(6);
-			//a�ado la cabecera
+			//anado la cabecera
 			filaCofradia.setHeaderRows(1);
 			for(String c : cabecera){
 				filaCofradia.addCell(c);				
 			}
-			//recorro el bucle para ir a�adiendo
+			//recorro el bucle para ir anadiendo
 			//todas las filas de la lista cofradia
 			for (Cofradia cofradia : lista) {
 				filaCofradia.setSpacingAfter(5);
@@ -136,7 +134,7 @@ public class ControladorCSVBD {
 				filaCofradia.addCell(cofradia.getH_salida());
 				filaCofradia.addCell(cofradia.getH_entrada());
 			}
-			//a�ado las filas.
+			//anado las filas.
 			archivoPDF.add(filaCofradia);
 			archivoPDF.close();
 		} catch (FileNotFoundException  | DocumentException e) {
