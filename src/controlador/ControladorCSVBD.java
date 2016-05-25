@@ -5,6 +5,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
@@ -27,6 +28,7 @@ public class ControladorCSVBD {
 	 * */
 	private static Connection conexionCofrade = null;
 	private static Statement sentencia;
+	private static PreparedStatement sp;
 	private ControladorCSVBD(){};
 	public static List<Cofradia> devolverString(File inFile){
 		String[] linea = new String[5];
@@ -147,6 +149,31 @@ public class ControladorCSVBD {
 				e.printStackTrace();
 			}
 		}
+	}
+	public static int actualizarCofradias(Connection con, Cofradia c, int posicion){
+		int cambios = 0;
+		String sqlc = "UPDATE cofradia SET nombre=?,fundacion=?,cofrades=?"
+				+ "titulares=?, salida=?,entrada=?"
+				+ "WHERE nombre=?";
+			try {
+				sp= con.prepareStatement(sqlc);
+				sp.setString(1, c.getNombre());
+				sp.setString(2, c.getFundacion()+"");
+				sp.setString(3, c.getN_hermanos()+"");
+				sp.setString(4, c.getTitulares()+"");
+				sp.setString(5, c.getH_salida());
+				sp.setString(6, c.getH_entrada());
+				sp.setString(7, posicion+"");
+				cambios = sp.executeUpdate();
+				
+			} catch (SQLException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			return cambios;
+	}
+	public static int borrarCofradia(Connection con, Cofradia c, int borrados){
+		return borrados;
 	}
 	static class MiShutdownHook extends Thread{
 		
