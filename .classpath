@@ -6,5 +6,6 @@
 	<classpathentry kind="lib" path="jgoodies-forms-1.8.0.jar" sourcepath="jgoodies-forms-1.8.0-sources.jar"/>
 	<classpathentry kind="lib" path="C:/Users/Sergio/Downloads/opencsv-3.7.jar"/>
 	<classpathentry kind="lib" path="C:/Users/Sergio/Downloads/sqlite-jdbc-3.8.11.2.jar"/>
+	<classpathentry kind="lib" path="C:/Users/Sergio/Desktop/Tomas/dist/lib/itextpdf-5.0.6.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

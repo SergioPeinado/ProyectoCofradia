@@ -38,12 +38,20 @@ import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 
 public class Prueba extends JFrame {
-
+	//lista donde se van a guardar los objetos cofradia
 	List<Cofradia> lista = new ArrayList<>();
+	//Con esta variable podemos hacer que el formulario se actualice
+	//al cambiar de registro
 	boolean actualizar = true;
+	//variable que nos va a controlar si estamos borrando o registros de las filas
 	boolean borrar = false;
+	//variable que va a hacer que no salte el option pane
+	//preguntando si queremos guardar.
 	int vez =0;
+	//el registro del cual venimos
 	int numero_registro;
+	//registro al cual vamos
+	//de ahi la "d" de registro destino
 	int d;
 	private JPanel contentPane;
 	private JTable table;
@@ -62,18 +70,29 @@ public class Prueba extends JFrame {
 	public Prueba(){
 		componentes();
 		table.getSelectionModel().addListSelectionListener((ListSelectionEvent e) ->{
+			//Aqui comprobamos que no se estan borrando los archivos ni nada
+			//y que ademas no se contenga ningun campo vacio
 			if(!borrar && !nombre.getText().matches("") && !fundacion.getText().matches("") && !nCofrades.getText().matches("") &&
 					!titulares.getText().matches("") && !salida.getText().matches("") && !entrada.getText().matches("")){
+			//si se da la condicion de arriba
+		    //se nos crea un nuevo objeto cofradia que obtiene todos los datos
+				//del csv
 				Cofradia c = new Cofradia(nombre.getText(), Integer.parseInt(fundacion.getText()), Integer.parseInt(nCofrades.getText()), Integer.parseInt(titulares.getText()),
 						salida.getText(), entrada.getText());
-						
+			//aqui se comprueba que el objeto nuevo que se crea
+				//no sea igual a uno ya creado
+				
 			if(!lista.get(numero_registro).equals(c) && vez < -1){
 				vez++;
 				if(table.getSelectedRow() != -1){
 					d = table.getSelectedRow();
 				}
+				//se llama al dialogo
+				//que no debe aparecer si esta bien creado el objeto
 				int valor = JOptionPane.showConfirmDialog(rootPane, "¿Desea guardar el registro?","Guardar",JOptionPane.YES_NO_OPTION);
 				if(valor == JOptionPane.YES_OPTION);{
+					//Aqui se actualiza los datos, en caso de ser modificados
+					//y se decide guardar.
 					actualizar = false;
 					lista.get(numero_registro).setCofradia(new Cofradia(nombre.getText(), Integer.parseInt(fundacion.getText()), Integer.parseInt(nCofrades.getText()), Integer.parseInt(titulares.getText()),
 						salida.getText(), entrada.getText()));
@@ -85,10 +104,16 @@ public class Prueba extends JFrame {
 			}
 		}
 			if(table.getSelectedRow() != -1){
+				//si se da la condicion guardaremos la fila donde estamos
 				numero_registro = table.getSelectedRow();
+				//para tenerla almacenada y poder usarla aqui correctamente
+				//y que nos cuente el nuemero de registros que tiene nuestra tabla.
 				lblRegistro.setText("Registro: "+(table.getSelectedRow()+1)+" de "+table.getRowCount());
 			}
 			if (actualizar){
+				//aqui añadimos a los formularios los registros que se obtienen de la tabla
+				//permitiendoq que si se cambia de fila
+				//los datos se actualicen
 				nombre.setText(lista.get(table.getSelectedRow()).getNombre());
 				fundacion.setText(lista.get(table.getSelectedRow()).getFundacion()+"");
 				nCofrades.setText(lista.get(table.getSelectedRow()).getN_hermanos()+"");
@@ -132,8 +157,30 @@ public class Prueba extends JFrame {
 		
 		JMenuItem cargar = new JMenuItem("Cargar");
 		mnNewMenu.add(cargar);
+		
+		JMenu mnCrear = new JMenu("Crear");
+		menuBar.add(mnCrear);
+		
+		JMenuItem mntmPdf = new JMenuItem("PDF");
+		mnCrear.add(mntmPdf);
+		mntmPdf.addActionListener(new java.awt.event.ActionListener(){
+			public void actionPerformed(java.awt.event.ActionEvent evt){
+				mntmPdfActionPerformed(evt);
+			}
+		});
+		
+		JMenu mnACerdaDe = new JMenu("A cerda de...");
+		menuBar.add(mnACerdaDe);
+		
+		JMenuItem mntmInfo = new JMenuItem("Info");
+		mnACerdaDe.add(mntmInfo);
+		mntmInfo.addActionListener(new java.awt.event.ActionListener(){
+			public void actionPerformed(java.awt.event.ActionEvent evt){
+				mntmInfoActionPerformed(evt);
+			}
+		});
 		cargar.addActionListener(new ActionListener() {
-			
+			//Aqui se ejecuta el JFileChooser para poder obtener los archivos
 			@Override
 			public void actionPerformed(ActionEvent arg0) {
 				int elegir = cargarArchivo.showOpenDialog(contentPane);
@@ -189,7 +236,7 @@ public class Prueba extends JFrame {
 		
 		nCofrades = new JTextField();
 		nCofrades.setColumns(10);
-		
+		//Añadimos todos los actionperformed
 		JLabel lblNombre = DefaultComponentFactory.getInstance().createLabel("Nombre: ");
 		 nombre.addActionListener(new java.awt.event.ActionListener(){
 			public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -345,7 +392,16 @@ public class Prueba extends JFrame {
 		panel.setLayout(gl_panel);
 						
 	}
-	
+	//Este metodo nos creara el pdf
+	private void mntmPdfActionPerformed(java.awt.event.ActionEvent evt){
+		ControladorCSVBD.creacionDePDF(lista);
+	}
+	//Aqui llamamos al JOptionPane para obtener la informacion
+	//del acerda de...
+	private void mntmInfoActionPerformed(java.awt.event.ActionEvent evt){
+		JOptionPane.showConfirmDialog(rootPane, "Proyecto sobre las cofradias que hay en Jaen \n Realizado por Sergio Peinado","Informacion: ", JOptionPane.PLAIN_MESSAGE);
+	}
+	//Agrega el campo nombre a su respectiva celda
 	private void celdaNombreActionPerformed(java.awt.event.ActionEvent evt){
 		 lista.get(table.getSelectedRow()).setNombre(nombre.getText());
 		 int fila = table.getSelectedRow();
@@ -354,6 +410,7 @@ public class Prueba extends JFrame {
 		 actualizar = true;
 		 table.setRowSelectionInterval(fila, fila);
 	 }
+	//Agrega el campo fundacion a su respectiva celda
 	 private void celdaFuncadionActionPerformed(java.awt.event.ActionEvent evt){
 		 lista.get(table.getSelectedRow()).setFundacion(Integer.parseInt(fundacion.getText()));
 		 int fila = table.getSelectedRow();
@@ -362,6 +419,7 @@ public class Prueba extends JFrame {
 		 actualizar = true;
 		 table.setRowSelectionInterval(fila, fila);
 	 }
+	//Agrega el campo hermanos a su respectiva celda
 	 private void celdaHermanosActionPerformed(java.awt.event.ActionEvent evt){
 		 lista.get(table.getSelectedRow()).setN_hermanos(Integer.parseInt(nCofrades.getText()));
 		 int fila = table.getSelectedRow();
@@ -370,6 +428,7 @@ public class Prueba extends JFrame {
 		 actualizar = true;
 		 table.setRowSelectionInterval(fila, fila);
 	 }
+	//Agrega el campo titulares a su respectiva celda
 	 private void celdaTitularesActionPerformed(java.awt.event.ActionEvent evt){
 		 lista.get(table.getSelectedRow()).setTitulares(Integer.parseInt(titulares.getText()));
 		 int fila = table.getSelectedRow();
@@ -378,6 +437,7 @@ public class Prueba extends JFrame {
 		 actualizar = true;
 		 table.setRowSelectionInterval(fila, fila);
 	 }
+	//Agrega el campo salida a su respectiva celda
 	 private void celdaSalidaActionPerformed(java.awt.event.ActionEvent evt){
 		 lista.get(table.getSelectedRow()).setH_salida(salida.getText());
 		 int fila= table.getSelectedRow();
@@ -386,6 +446,7 @@ public class Prueba extends JFrame {
 		 actualizar = true;
 		 table.setRowSelectionInterval(fila, fila);
 	 }
+	//Agrega el campo Entrada a su respectiva celda
 	 private void celdaEntradaActionPerformed(java.awt.event.ActionEvent evt){
 		 lista.get(table.getSelectedRow()).setH_entrada(entrada.getText());
 		 int fila= table.getSelectedRow();
@@ -394,6 +455,7 @@ public class Prueba extends JFrame {
 		 actualizar = true;
 		 table.setRowSelectionInterval(fila, fila);
 	 }
+	 //Con este metodo nos permite ir hacia delante en la tabla con el boton
 	 private void botonSiguienteActionPerformed(java.awt.event.ActionEvent evt){
 		 if(table.getSelectedRow()!=table.getRowCount()-1 && table.getSelectedRow()!=-1)
 			 table.setRowSelectionInterval(table.getSelectedRow()+1,table.getSelectedRow()+1);
@@ -402,6 +464,7 @@ public class Prueba extends JFrame {
 	                    
 	        }
 	 }
+	 //con este metodo nos permitirá ir hacia atras en la tabla
 	 private void botonAtrasActionPerformed(java.awt.event.ActionEvent evt){
 		 if (table.getSelectedRow()!=0 && table.getSelectedRow()!=-1)
 	            table.setRowSelectionInterval(table.getSelectedRow()-1, table.getSelectedRow()-1);
@@ -410,12 +473,16 @@ public class Prueba extends JFrame {
 	           
 	        }	  
 	 }
+	 //Aqui añadimos un nuevo registro
+	 //no tiene perdida
 	 private void botonAñadirActionPerformed(java.awt.event.ActionEvent evt){
 		 actualizar =false;
 		 table.setModel(ControladorCSVBD.agregarRegistro(cabecera,lista));	 
 		 actualizar = true;
 		 table.setRowSelectionInterval(table.getRowCount()-1,table.getRowCount()-1);
 	 }
+	 //y aqui se elimina
+	 //siempre que haya una fila.
 	 private void botonEliminarActionPerformed(java.awt.event.ActionEvent evt){
 		 borrar = true;
 		 actualizar =false;
@@ -429,4 +496,5 @@ public class Prueba extends JFrame {
 		 borrar = false;
 		
 	 }
+	 
 }
